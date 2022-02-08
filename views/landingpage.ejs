@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to whatever</title>
+  </head>
+  <body>
+    <script>
+      var signup = document.createElement("a");
+      var signin = document.createElement("a");
+      var btn = document.createElement("button");
+      var btn2 = document.createElement("button");
+      signup.href = `${window.location.href}signup`;
+      signin.href = `${window.location.href}signin`;
+      btn.innerHTML = "signup";
+      btn2.innerHTML = "signin";
+      signup.appendChild(btn);
+      signin.appendChild(btn2);
+      document.body.appendChild(signup);
+      document.body.appendChild(signin);
+    </script>
+  </body>
+</html>
