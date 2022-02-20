@@ -1,5 +1,7 @@
-const UserModel = require("../model/usermodel");
+const UserModel = require("../model/UserModel");
 const VideoModel = require("../model/VideoModel");
+const fs = require("fs");
+const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
 async function LoginCheck(details) {
   Name = details.name;
@@ -40,24 +42,52 @@ function ValidateToken(token, secret) {
     return null;
   }
 }
-async function VideoUpload(video, user) {
+async function VideoSave(video, user) {
   try {
-    var User = await UserModel.findOne({ email: user.email });
+    if (!this.User) this.User = await UserModel.findOne({ email: user.email });
+    if (!this.VideoId) this.VideoId = nanoid();
+    if (!this.size) this.size = 0;
+    var ext = video.name.split(".");
+    var exit;
+    ext = ext[ext.length - 1];
+    fs.appendFileSync(`./videos/${this.VideoId}.${ext}`, video.data);
+    this.size += video.data.length;
+    if (!(this.size == video.size)) {
+      return `${this.VideoId}.${ext}`;
+    }
+    fs.stat(`./videos/${this.VideoId}.${ext}`, (err, stat) => {
+      if (!err && stat.size == video.size) return;
+      this.VideoId = undefined;
+      this.User = undefined;
+      this.size = undefined;
+      console.log("oejk");
+      exit = `${this.VideoId}.${ext}`;
+    });
+    console.log("oejk");
+    if (exit) return exit;
     var Video = new VideoModel({
       VideoName: video.name,
-      Video: video[user.email][video.name].data[0],
-      Channel: User._id,
+      VideoID: this.VideoId,
+      Video: `./videos/${this.VideoId}.${ext}`,
+      Channel: this.User._id,
     });
     await UserModel.findOneAndUpdate(
-      { _id: User._id },
+      { _id: this.User._id },
       { $push: { Videos: Video._id } }
     );
     await Video.save();
+    console.log("video saved");
+    this.VideoId = undefined;
+    this.User = undefined;
+    this.size = undefined;
+    return undefined;
   } catch (ex) {
     console.log("ex :", ex);
   }
 }
 async function GetVideos(current) {
+  var vid = await VideoModel.find({});
+  console.log(vid, typeof vid.UploadDate);
   var videos = await VideoModel.find(
     { UploadDate: { $lte: current } },
     { Video: 0 }
@@ -72,5 +102,5 @@ exports.LoginCheck = LoginCheck;
 exports.CreateJWT = CreateJWT;
 exports.CreateRefreshToken = CreateRefreshToken;
 exports.ValidateToken = ValidateToken;
-exports.VideoUpload = VideoUpload;
+exports.VideoSave = VideoSave;
 exports.GetVideos = GetVideos;

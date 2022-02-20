@@ -3,22 +3,21 @@ function ReadFile() {
   f = document.getElementById("video").files[0];
   filereader.readAsArrayBuffer(f);
   filereader.onload = (e) => {
-    console.log(f, e);
     Upload(f, e);
   };
   // if (!f.type.includes("video")) {
   //   alert("please upload a video");
   // }
 }
-function Upload(metadata, data) {
+async function Upload(metadata, data) {
   console.log(metadata);
   var bytes = new Uint8Array(data.target.result);
   var byteLength = data.target.result.byteLength;
-  const CHUNK_SIZE = 1024 * 1024 * 4;
+  const CHUNK_SIZE = 1024 * 500;
   const CHUNK_ID = byteLength / CHUNK_SIZE;
   for (let i = 0; i < CHUNK_ID; i++) {
     var CHUNK = bytes.slice(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
-    socket.emit("upload", {
+    await socket.emit("upload", {
       name: metadata.name,
       size: byteLength,
       data: CHUNK,

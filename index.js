@@ -1,5 +1,5 @@
-//goto line 54
 flag = false;
+const fs = require("fs");
 const express = require("express");
 const socketio = require("socket.io");
 const http = require("http");
@@ -9,12 +9,12 @@ require("ejs");
 const bodyParser = require("body-parser");
 const { createHash } = require("crypto");
 const mongoose = require("mongoose");
-const UserModel = require("./model/usermodel");
+const UserModel = require("./model/UserModel");
 const {
   CreateJWT,
   CreateRefreshToken,
   ValidateToken,
-  VideoUpload,
+  VideoSave,
   GetVideos,
 } = require("./utils/utils");
 var conn = mongoose.connection;
@@ -26,21 +26,16 @@ app.use(express.json());
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 io.on("connection", (socket) => {
-  var video = {};
+  var video;
   user = ValidateToken(socket.handshake.query.token, process.env.JWT_SECRET);
-  if (user == null) console.log("sucket");
-  socket.on("upload", (data) => {
-    video[user.email] = {};
-    video[user.email][data.name] = {};
-    video[user.email][data.name].size = data.size;
-    video.name = data.name;
-    if (!video[user.email][data.name].data)
-      video[user.email][data.name].data = [];
-    video[user.email][data.name].data.push(data.data);
-    if (data.size == video[user.email][data.name].data[0].length) {
-      console.log("calling video upload function");
-      VideoUpload(video, user);
-      video = {};
+  if (user == null) console.log("sucket"), socket.disconnect();
+  socket.on("upload", async (data) => {
+    video = VideoSave(data, user);
+  });
+  socket.on("disconnect", () => {
+    if (video && typeof video == "string") {
+      console.log(typeof video, toString(video));
+      fs.unlinkSync(`./videos/${video}`);
     }
   });
   socket.on("show-Videos", async (current) => {
@@ -51,11 +46,7 @@ io.on("connection", (socket) => {
   });
   socket.on("stream", (data) => {
     console.log(data);
-    if (!stream)
-      //socket event stream pr user video-id, resolution aur time ya consumed chunks ki length bhejega
-      //us ke hisab se stream ek pipeline create karni hai aur original res se us ko jo res chahiye uspr change karna hai
-      //basically original 720p hai aur usko 480p chahiye to gstreamer se quality change karke data socket ke through bhejna hai
-      stream = new gstreamer.Pipeline("");
+    // if (!stream) stream = new gstreamer.Pipeline("");
   });
 });
 mongoose
@@ -84,7 +75,7 @@ app.get("/upload", (req, res) => {
   const jwt = req.cookies.jwt;
   var IsloggedIn = ValidateToken(jwt, process.env.JWT_SECRET);
   if (IsloggedIn != null) res.render("upload");
-  else res.render("landingpage");
+  else res.redirect("/");
 });
 app.get("/", (req, res) => {
   const jwt = req.cookies.jwt;
