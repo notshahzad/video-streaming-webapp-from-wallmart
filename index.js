@@ -39,13 +39,15 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("show-Videos", async (current) => {
-    console.log("oke");
-    var videos = await GetVideos(current);
-    console.log(videos);
-    socket.emit("videos", { videos: videos });
+    video = await GetVideos(current);
+    console.log(video);
+
+    if (video.length == 0) return;
+    socket.emit("videos", video);
   });
   socket.on("stream", (data) => {
     console.log(data);
+    // fs.createReadStream();
     // if (!stream) stream = new gstreamer.Pipeline("");
   });
 });
@@ -85,6 +87,9 @@ app.get("/", (req, res) => {
   } else {
     res.render("mainpage");
   }
+});
+app.get("/watch", (req, res) => {
+  res.render("watch", { video: req.query.v });
 });
 app.post("/token", async (req, res) => {
   var ref_token = req.body.ref_token;

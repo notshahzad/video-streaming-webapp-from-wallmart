@@ -3,6 +3,8 @@ const VideoModel = require("../model/VideoModel");
 const fs = require("fs");
 const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
+const gst_superficial = require("gstreamer-superficial");
+const getDimensions = require("get-video-dimensions");
 async function LoginCheck(details) {
   Name = details.name;
   Email = details.email;
@@ -50,6 +52,17 @@ async function VideoSave(video, user) {
     var ext = video.name.split(".");
     var exit;
     ext = ext[ext.length - 1];
+    if (!this.res) {
+      fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
+      getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
+        (resolution) => {
+          this.res.height = resolution.height;
+          this.res.width = resolution.width;
+          ratio = this.res.height / this.res.width;
+        }
+      );
+      fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`);
+    }
     fs.appendFileSync(`./videos/${this.VideoId}.${ext}`, video.data);
     this.size += video.data.length;
     if (!(this.size == video.size)) {
@@ -60,11 +73,13 @@ async function VideoSave(video, user) {
       this.VideoId = undefined;
       this.User = undefined;
       this.size = undefined;
-      console.log("oejk");
       exit = `${this.VideoId}.${ext}`;
     });
-    console.log("oejk");
     if (exit) return exit;
+    pipeline720p = new gst_superficial.Pipeline(
+      `filesrc location="./videos/${this.VideoId}.${ext}" ! video/x-raw,width=1280,height=720,framerate=30/1 ! videoconvert ! filesink location="./videos/720p/${this.VideoId}.${ext}"`
+    );
+    pipeline720p.play();
     var Video = new VideoModel({
       VideoName: video.name,
       VideoID: this.VideoId,
@@ -86,17 +101,15 @@ async function VideoSave(video, user) {
   }
 }
 async function GetVideos(current) {
-  var vid = await VideoModel.find({});
-  console.log(vid, typeof vid.UploadDate);
   var videos = await VideoModel.find(
-    { UploadDate: { $lte: current } },
+    { UploadDate: { $lt: current } },
     { Video: 0 }
   )
-    .sort({ UploadDate: 1 })
+    .sort({ UploadDate: -1 })
     .limit(10)
     .populate("Channel", "name")
     .exec();
-  return { videos };
+  return videos;
 }
 exports.LoginCheck = LoginCheck;
 exports.CreateJWT = CreateJWT;
