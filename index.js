@@ -20,6 +20,7 @@ const {
 var conn = mongoose.connection;
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
+const VideoModel = require("./model/VideoModel");
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -45,10 +46,41 @@ io.on("connection", (socket) => {
     if (video.length == 0) return;
     socket.emit("videos", video);
   });
-  socket.on("stream", (data) => {
-    console.log(data);
-    // fs.createReadStream();
-    // if (!stream) stream = new gstreamer.Pipeline("");
+  socket.on("stream", async (data) => {
+    // var videodata;
+    // try {
+    //   videodata = await VideoModel.findOne({ VideoID: data.VideoId });
+    //   console.log(data.VideoId);
+    // } catch (err) {
+    //   console.log(err);
+    //   return;
+    // }
+    if (!this.filesize) {
+      this.filesize = fs.statSync("./test/b.webm").size;
+      console.log(this.filesize);
+    }
+    new_end = data.bufferend + 665536 - 1;
+    console.log(this.filesize - data.bufferend);
+    if (this.filesize - data.bufferend < 665536) {
+      new_end = this.filesize;
+    }
+    // console.log(videodata);
+    // if (!videodata) return;
+    // var videostream = fs.createReadStream(videodata.Video, {
+    //   start: data.bufferend,
+    //   end: data.bufferend + 1000,
+    // });
+    var videostream = fs.createReadStream("./test/b.webm", {
+      start: data.bufferend,
+      end: new_end - 1,
+    });
+    if (this.filesize == new_end) new_end = undefined;
+    videostream.addListener("data", (data) => {
+      socket.emit("VideoChunks", {
+        VideoChunk: data,
+        bufferend: new_end,
+      });
+    });
   });
 });
 mongoose
@@ -89,7 +121,13 @@ app.get("/", (req, res) => {
   }
 });
 app.get("/watch", (req, res) => {
-  res.render("watch", { video: req.query.v });
+  const jwt = req.cookies.jwt;
+  var IsloggedIn = ValidateToken(jwt, process.env.JWT_SECRET);
+  if (IsloggedIn == null) {
+    res.render("landingpage");
+  } else {
+    res.render("watch", { video: req.query.v });
+  }
 });
 app.post("/token", async (req, res) => {
   var ref_token = req.body.ref_token;

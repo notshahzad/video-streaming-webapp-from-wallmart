@@ -52,18 +52,20 @@ async function VideoSave(video, user) {
     var ext = video.name.split(".");
     var exit;
     ext = ext[ext.length - 1];
-    if (!this.res) {
-      fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
-      getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
-        (resolution) => {
-          this.res.height = resolution.height;
-          this.res.width = resolution.width;
-          ratio = this.res.height / this.res.width;
-        }
-      );
-      fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`);
-    }
-    fs.appendFileSync(`./videos/${this.VideoId}.${ext}`, video.data);
+    // if (!this.res) {
+    //   fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
+    //   getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
+    //     (resolution) => {
+    //       this.res.height = resolution.height;
+    //       this.res.width = resolution.width;
+    //       ratio = this.res.height / this.res.width;
+
+    //     }
+    //   );
+    //   fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`);
+    // }
+    //save file in original encoding
+    fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
     this.size += video.data.length;
     if (!(this.size == video.size)) {
       return `${this.VideoId}.${ext}`;
@@ -75,11 +77,25 @@ async function VideoSave(video, user) {
       this.size = undefined;
       exit = `${this.VideoId}.${ext}`;
     });
+    //get quality of the video
+    if (!this.res) {
+      getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
+        (resolution) => {
+          this.res.height = resolution.height;
+          this.res.width = resolution.width;
+          ratio = this.res.height / this.res.width;
+        }
+      );
+    }
+    //convert to orginal video to webm
+
+    //fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`); //delete the original video
     if (exit) return exit;
-    pipeline720p = new gst_superficial.Pipeline(
-      `filesrc location="./videos/${this.VideoId}.${ext}" ! video/x-raw,width=1280,height=720,framerate=30/1 ! videoconvert ! filesink location="./videos/720p/${this.VideoId}.${ext}"`
-    );
-    pipeline720p.play();
+    //make a copy of the video and change the quality
+    // pipeline720p = new gst_superficial.Pipeline(
+    //   `filesrc location="./videos/${this.VideoId}.${ext}" ! video/x-raw,width=1280,height=720,framerate=30/1 ! videoconvert ! filesink location="./videos/720p/${this.VideoId}.${ext}"`
+    // );
+    // pipeline720p.play();
     var Video = new VideoModel({
       VideoName: video.name,
       VideoID: this.VideoId,
