@@ -17,7 +17,8 @@ if (!this.mediaSource) {
   console.log(VideoId);
   this.sourceBuffer;
   this.mediaSource = new MediaSource();
-  var mimecodec = 'video/webm; codecs="vp8"';
+  // var mimecodec = 'video/webm; codecs="vp8"';
+  var mimecodec = 'video/mp4; codecs="avc1.64002a"';
   document.getElementById("Video").src = window.URL.createObjectURL(
     this.mediaSource
   );

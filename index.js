@@ -47,6 +47,9 @@ io.on("connection", (socket) => {
     socket.emit("videos", video);
   });
   socket.on("stream", async (data) => {
+    if (data.bufferend == NaN || data.bufferend == undefined) {
+      return;
+    }
     // var videodata;
     // try {
     //   videodata = await VideoModel.findOne({ VideoID: data.VideoId });
@@ -56,7 +59,7 @@ io.on("connection", (socket) => {
     //   return;
     // }
     if (!this.filesize) {
-      this.filesize = fs.statSync("./test/b.webm").size;
+      this.filesize = fs.statSync("./b_dashinit.mp4").size;
       console.log(this.filesize);
     }
     new_end = data.bufferend + 665536 - 1;
@@ -70,7 +73,7 @@ io.on("connection", (socket) => {
     //   start: data.bufferend,
     //   end: data.bufferend + 1000,
     // });
-    var videostream = fs.createReadStream("./test/b.webm", {
+    var videostream = fs.createReadStream("./b_dashinit.mp4", {
       start: data.bufferend,
       end: new_end - 1,
     });

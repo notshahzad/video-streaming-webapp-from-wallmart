@@ -3,8 +3,7 @@ const VideoModel = require("../model/VideoModel");
 const fs = require("fs");
 const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
-const gst_superficial = require("gstreamer-superficial");
-const getDimensions = require("get-video-dimensions");
+// const getDimensions = require("get-video-dimensions");
 async function LoginCheck(details) {
   Name = details.name;
   Email = details.email;
@@ -52,50 +51,20 @@ async function VideoSave(video, user) {
     var ext = video.name.split(".");
     var exit;
     ext = ext[ext.length - 1];
-    // if (!this.res) {
-    //   fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
-    //   getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
-    //     (resolution) => {
-    //       this.res.height = resolution.height;
-    //       this.res.width = resolution.width;
-    //       ratio = this.res.height / this.res.width;
-
-    //     }
-    //   );
-    //   fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`);
-    // }
-    //save file in original encoding
-    fs.appendFileSync(`./videos/temp/${this.VideoId}.${ext}`, video.data);
+    fs.appendFileSync(`./videos/temp/${this.VideoId}_temp.${ext}`, video.data);
     this.size += video.data.length;
     if (!(this.size == video.size)) {
       return `${this.VideoId}.${ext}`;
     }
-    fs.stat(`./videos/${this.VideoId}.${ext}`, (err, stat) => {
+    fs.stat(`./videos/temp${this.VideoId}_temp.${ext}`, (err, stat) => {
       if (!err && stat.size == video.size) return;
       this.VideoId = undefined;
       this.User = undefined;
       this.size = undefined;
       exit = `${this.VideoId}.${ext}`;
     });
-    //get quality of the video
-    if (!this.res) {
-      getDimensions(`./videos/temp/${this.VideoId}.${ext}`).then(
-        (resolution) => {
-          this.res.height = resolution.height;
-          this.res.width = resolution.width;
-          ratio = this.res.height / this.res.width;
-        }
-      );
-    }
-    //convert to orginal video to webm
-
-    //fs.unlinkSync(`./videos/temp/${this.VideoId}.${ext}`); //delete the original video
     if (exit) return exit;
-    //make a copy of the video and change the quality
-    // pipeline720p = new gst_superficial.Pipeline(
-    //   `filesrc location="./videos/${this.VideoId}.${ext}" ! video/x-raw,width=1280,height=720,framerate=30/1 ! videoconvert ! filesink location="./videos/720p/${this.VideoId}.${ext}"`
-    // );
-    // pipeline720p.play();
+    //./video/temp/./convert-to-mp4.sh `${this.VideoId}_tenp.${ext}` `../${this.VideoId}.mp4` ``${this.VideoId}_dashinit.mp4``
     var Video = new VideoModel({
       VideoName: video.name,
       VideoID: this.VideoId,
@@ -117,16 +86,18 @@ async function VideoSave(video, user) {
   }
 }
 async function GetVideos(current) {
+  console.log(current);
   var videos = await VideoModel.find(
-    { UploadDate: { $lt: current } },
+    { UploadDate: { $l: current } },
     { Video: 0 }
   )
     .sort({ UploadDate: -1 })
-    .limit(10)
+    .limit(2)
     .populate("Channel", "name")
     .exec();
   return videos;
 }
+
 exports.LoginCheck = LoginCheck;
 exports.CreateJWT = CreateJWT;
 exports.CreateRefreshToken = CreateRefreshToken;
