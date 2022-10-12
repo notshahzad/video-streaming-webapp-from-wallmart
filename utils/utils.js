@@ -88,7 +88,7 @@ async function VideoSave(video, user) {
 async function GetVideos(current) {
   console.log(current);
   var videos = await VideoModel.find(
-    { UploadDate: { $l: current } },
+    { UploadDate: { $lte: current } },
     { Video: 0 }
   )
     .sort({ UploadDate: -1 })

@@ -1,4 +1,4 @@
-flag = false;
+flag = true;
 const fs = require("fs");
 const express = require("express");
 const socketio = require("socket.io");
@@ -40,6 +40,7 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("show-Videos", async (current) => {
+    if (current == null) return;
     video = await GetVideos(current);
     console.log(video);
 
