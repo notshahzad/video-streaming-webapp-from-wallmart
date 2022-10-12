@@ -1,5 +1,6 @@
 const UserModel = require("../model/UserModel");
 const VideoModel = require("../model/VideoModel");
+const { exec } = require("child_process");
 const fs = require("fs");
 const { nanoid } = require("nanoid");
 const jwt = require("jsonwebtoken");
@@ -64,7 +65,13 @@ async function VideoSave(video, user) {
       exit = `${this.VideoId}.${ext}`;
     });
     if (exit) return exit;
-    //./video/temp/./convert-to-mp4.sh `${this.VideoId}_tenp.${ext}` `../${this.VideoId}.mp4` ``${this.VideoId}_dashinit.mp4``
+    exec(
+      `./videos/temp/./convert-to-mp4.sh ./videos/temp/${this.VideoId}_temp.${ext} ./videos/${this.VideoId}.mp4 ./${this.VideoId}_dashinit.mp4`,
+      (error, stdout, stderr) => {
+        console.log(error);
+        console.log(stdout);
+      }
+    );
     var Video = new VideoModel({
       VideoName: video.name,
       VideoID: this.VideoId,

@@ -1,4 +1,4 @@
-flag = true;
+flag = false;
 const fs = require("fs");
 const express = require("express");
 const socketio = require("socket.io");
@@ -48,36 +48,36 @@ io.on("connection", (socket) => {
     socket.emit("videos", video);
   });
   socket.on("stream", async (data) => {
+    console.log(data);
     if (data.bufferend == NaN || data.bufferend == undefined) {
       return;
     }
-    // var videodata;
-    // try {
-    //   videodata = await VideoModel.findOne({ VideoID: data.VideoId });
-    //   console.log(data.VideoId);
-    // } catch (err) {
-    //   console.log(err);
-    //   return;
-    // }
+    var videodata;
+    try {
+      videodata = await VideoModel.findOne({ VideoID: data.VideoId });
+      console.log(videodata);
+    } catch (err) {
+      console.log(err);
+      return;
+    }
     if (!this.filesize) {
-      this.filesize = fs.statSync("./b_dashinit.mp4").size;
+      this.filesize = fs.statSync(`${videodata.Video}`).size;
       console.log(this.filesize);
     }
+    console.log(videodata);
+    if (!videodata) return;
     new_end = data.bufferend + 665536 - 1;
-    console.log(this.filesize - data.bufferend);
     if (this.filesize - data.bufferend < 665536) {
       new_end = this.filesize;
     }
-    // console.log(videodata);
-    // if (!videodata) return;
-    // var videostream = fs.createReadStream(videodata.Video, {
-    //   start: data.bufferend,
-    //   end: data.bufferend + 1000,
-    // });
-    var videostream = fs.createReadStream("./b_dashinit.mp4", {
+    var videostream = fs.createReadStream(videodata.Video, {
       start: data.bufferend,
       end: new_end - 1,
     });
+    //var videostream = fs.createReadStream(`./videos/${videodata.VideoId}.mp4`, {
+    //start: data.bufferend,
+    //end: new_end - 1,
+    //});
     if (this.filesize == new_end) new_end = undefined;
     videostream.addListener("data", (data) => {
       socket.emit("VideoChunks", {
